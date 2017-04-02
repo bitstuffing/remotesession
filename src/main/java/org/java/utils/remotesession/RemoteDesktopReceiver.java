@@ -49,7 +49,7 @@ public class RemoteDesktopReceiver extends JFrame{
 						StringSelection data = new StringSelection(sResponse);
 						clipboard.setContents(data, data);
 					}
-					NotificationLauncher.showNotification("Waiting","Session is: "+sResponse+" and has been copied to clipboard.\nListening for a conection at default port: "+Constants.REMOTE_PORT);
+					NotificationLauncher.showNotification("Waiting","Session is: "+sResponse+" and has been copied to clipboard.\nListening for a connection at default port: "+Constants.REMOTE_PORT);
 					SessionHandeler sessionHandler = new SessionHandeler(new ServerSocket(Constants.REMOTE_PORT),response);
 					sessionHandler.chatjframe = new JFrame();
 //					ConnectionHandeler.chatjframe.setLayout(new BoxLayout(ConnectionHandeler.chatjframe,BoxLayout.Y_AXIS));
@@ -61,7 +61,7 @@ public class RemoteDesktopReceiver extends JFrame{
 				try {
 					Thread.sleep(1000); //check time
 				} catch (InterruptedException e) {
-					NotificationLauncher.showNotification("Connection reset","Waiting to a reconection...");
+					NotificationLauncher.showNotification("Connection reset","Waiting to a reconnection...");
 				}
 			}while (true);
 		} catch (IOException ex) {
