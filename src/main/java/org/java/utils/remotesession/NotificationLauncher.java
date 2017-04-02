@@ -16,21 +16,41 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.WindowConstants;
 
+import org.apache.log4j.Logger;
+import org.java.utils.remotesession.utils.Constants;
+
 public class NotificationLauncher{
 	
-	private static JFrame frame;
+	private static Logger log = Logger.getLogger(Constants.LOG);
+	
 	private static int width;
 	private static int height;
+	
+	private static ImageIcon headingIcon;
 	
 	private final static long DISPLAY_TIME = 3000;
 	
 	static{
 		width = 300;
 		height = 80;
+		String path = "";
+		try{
+			URL url = Thread.currentThread().getContextClassLoader().getResource("mail.jpg");
+			path = new File(url.toURI()).getAbsolutePath();
+		}catch(Exception e){ log.warn(e.getMessage()); }
+		headingIcon = new ImageIcon(path);
 	}
 	
-	public static void showNotification(String title,String body) {
-		buildFrame(title,body);
+	public static void showNotification(String title,String body){
+		showNotification(title, body, DISPLAY_TIME);
+	}
+	
+	public static void showNotification(String title,String body,long time) {
+		log.debug("Showing notification: "+title+", "+body);
+		final JFrame frame = new JFrame();
+		frame.setSize(width,height);
+		frame.setIconImage(headingIcon.getImage());
+		buildFrame(frame,title,body);
 		Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();// size of the screen
 		Insets toolHeight = Toolkit.getDefaultToolkit().getScreenInsets(frame.getGraphicsConfiguration());// height of the task bar
 		frame.setLocation(scrSize.width - frame.getWidth(), scrSize.height - toolHeight.bottom - frame.getHeight());
@@ -41,19 +61,18 @@ public class NotificationLauncher{
 					Thread.sleep(DISPLAY_TIME); // time after pop up will be disappeared.
 					frame.dispose();
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					log.warn(e.getMessage());
 			    }
 		    };
 		}.start();
 	}
 
-	private static void buildFrame(String messageTitle, String messageBody){
+	private static void buildFrame(final JFrame frame,String messageTitle, String messageBody){
 		String message = messageBody;
 		String header = messageTitle;
-		frame = new JFrame();
-		frame.setSize(width,height);
 		frame.setUndecorated(true);
 		frame.setLayout(new GridBagLayout());
+		final double random = Math.random();
 		GridBagConstraints constraints = new GridBagConstraints();
 		constraints.gridx = 0;
 		constraints.gridy = 0;
@@ -62,12 +81,6 @@ public class NotificationLauncher{
 		constraints.insets = new Insets(5, 5, 5, 5);
 		constraints.fill = GridBagConstraints.BOTH;
 		JLabel headingLabel = new JLabel(header);
-		String path = "";
-		try{
-			URL url = NotificationLauncher.class.getClassLoader().getResource("mail.jpg");
-			path = new File(url.toURI()).getAbsolutePath();
-		}catch(Exception e){ e.printStackTrace(); }
-		ImageIcon headingIcon = new ImageIcon(path);
 		headingLabel.setIcon(headingIcon); // --- use image icon you want to be as heading image.
 		headingLabel.setOpaque(false);
 		frame.add(headingLabel, constraints);

@@ -12,18 +12,28 @@ import javax.swing.JFrame;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.java.utils.remotesession.utils.Constants;
+
 public class Launcher {
+	
+	private static Logger log = LogManager.getLogger(Constants.LOG);
 
 	private static final String WAIT_TO = "Allow and wait for a remotesession";
 	private static final String SEND_TO = "Send your local desktop to a remotesession";
 
 	public static void main(String[] args) {
 		try {
+			//configure logs
+//			PropertyConfigurator.configure(Thread.currentThread().getContextClassLoader().getResource("log4j.properties"));
+			//choose swing lock and feel 
 			UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
 			UIManager.put("swing.boldMetal", Boolean.FALSE);
 		}catch (Exception e1) {
-			e1.printStackTrace();
+			log.warn(e1.getMessage());
 		}
+		log.info("Welcome!");
 		final JFrame v = new JFrame("Welcome");
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		GridBagConstraints cc = new GridBagConstraints();
@@ -55,7 +65,7 @@ public class Launcher {
 				try {
 					Thread.sleep(2000);
 				} catch (InterruptedException ex) {
-					ex.printStackTrace();
+					log.warn(ex.getMessage());
 				}
 				v.dispose();
 			}
@@ -65,6 +75,7 @@ public class Launcher {
 		v.add(button,cc);
         v.pack();
         v.setVisible(true);
+        log.debug("Showing form...");
         v.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 	}
 

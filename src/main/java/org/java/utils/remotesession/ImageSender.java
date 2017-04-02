@@ -8,9 +8,13 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.Socket;
 
+import org.apache.log4j.Logger;
+import org.java.utils.remotesession.utils.Constants;
 import org.java.utils.remotesession.utils.ImageUtils;
 
 public class ImageSender extends AbstractConnectionHandler {
+	
+	private Logger log = Logger.getLogger(Constants.LOG);
 
 	private float quality = 0.7f;
 	private Robot robot;
@@ -31,14 +35,14 @@ public class ImageSender extends AbstractConnectionHandler {
 		try {
 			this.inputStream = socket.getInputStream();
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error(e.getMessage());
 		}
 		try {
 			this.outputStream = socket.getOutputStream();
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error(e.getMessage());
 		}
-		System.out.println("Sender :"+socket.getLocalPort()+" ::"+socket.getPort());
+		log.info("Sender :"+socket.getLocalPort()+" ::"+socket.getPort());
 	}
 	
 	public void run() {
@@ -54,7 +58,7 @@ public class ImageSender extends AbstractConnectionHandler {
 				sendCommand("image", bytes);
 				Thread.sleep(1000/framesPerSecond);
 			} catch (Exception ex) {
-				ex.printStackTrace();
+				log.error(ex.getMessage());
 			} finally {
 				screenShot = null;
 				bytes = null;

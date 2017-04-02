@@ -31,9 +31,16 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.log4j.Logger;
+import org.java.utils.remotesession.utils.ConnectionUtils;
+import org.java.utils.remotesession.utils.Constants;
+import org.java.utils.remotesession.utils.EncryptionUtils;
+import org.json.JSONObject;
+
 public class RemoteDesktopSender extends JFrame{
 	
-	private static final int REMOTE_PORT = 2009;
+	private Logger log = Logger.getLogger(Constants.LOG);
+	
 	private static Integer framesPerSecond;
 	private static Robot robot;
 	private JSlider jslider;
@@ -65,21 +72,40 @@ public class RemoteDesktopSender extends JFrame{
 		String response = null;
 		try {
 			robot = new Robot();
-			String password = JOptionPane.showInputDialog("Write session password:");
-			password = (password==null || password.isEmpty())?this.key:password;
-			for(;(password.length())%16!=0;){
-				password+="p";
+//			String password = JOptionPane.showInputDialog("Write session password:");
+//			password = (password==null || password.isEmpty())?this.key:password;
+//			for(;(password.length())%16!=0;){
+//				password+="p";
+//			}
+//			key = password;
+//			final String response2 = JOptionPane.showInputDialog("Write remote address (needs to be waiting for):");
+			String id = null;
+			do{
+				id = JOptionPane.showInputDialog("Write session id:");
+			}while(id==null || id.isEmpty());
+			JSONObject jsonResponse = null;
+			try {
+				String sResponse = ConnectionUtils.get(Constants.HASTEBIN_RAW_PROVIDER+id);
+				byte[] decryptedBytes = EncryptionUtils.decrypt(key, null, sResponse.getBytes());
+				jsonResponse = new JSONObject(new String(decryptedBytes));
+			} catch (Exception e) {
+				log.warn(e.getMessage());
 			}
-			key = password;
-			final String response2 = JOptionPane.showInputDialog("Write remote address (needs to be waiting for):");
+			String response2 = jsonResponse.getString("ip"); //local ipaddress (LAN)
+			String password = jsonResponse.getString("password");
+			String externalIp = jsonResponse.getString("externalIp"); //remote ipaddress (WAN)
+			String localExternalIp = ConnectionUtils.getInternetIpAddress();
+			if(localExternalIp!=null && !localExternalIp.equals(externalIp)){
+				response2 = externalIp;
+			}
 			if(response2!=null && !response2.isEmpty()){
 				try{
-					Socket socket = new Socket(response2, REMOTE_PORT);
+					Socket socket = new Socket(response2, Constants.REMOTE_PORT);
 					remoteAddress = socket.getRemoteSocketAddress().toString();
 					buildLocalJFramePanel();
 					imageSender = new ImageSender(socket,robot,password);
 					imageSender.start();
-					Socket socket2 = new Socket(response2, REMOTE_PORT);
+					Socket socket2 = new Socket(response2, Constants.REMOTE_PORT);
 					commandHandler = new CommandHandler(socket2,robot,password);
 					commandHandler.start();
 					setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -101,10 +127,10 @@ public class RemoteDesktopSender extends JFrame{
 
 	private void buildLocalJFramePanel() {
 		try {
-			UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
-			UIManager.put("swing.boldMetal", Boolean.FALSE);
+			UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+//			UIManager.put("swing.boldMetal", Boolean.FALSE);
 		}catch (Exception e1) {
-			e1.printStackTrace();
+			log.warn(e1.getMessage());
 		}
 		this.getContentPane().setLayout(new BoxLayout(this.getContentPane(),BoxLayout.Y_AXIS));
 		GridBagConstraints cc = new GridBagConstraints();
@@ -189,7 +215,7 @@ public class RemoteDesktopSender extends JFrame{
 	    JCheckBox chatCheckbox = new JCheckBox();
 	    chatCheckbox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				System.out.println("click!");
+				log.info("click!");
 				enableChat = !enableChat;
 				chatTextField.setEditable(enableChat);
 				chatTextField.setText("");
@@ -197,7 +223,7 @@ public class RemoteDesktopSender extends JFrame{
 					Thread.sleep(250);
 					commandHandler.sendCommand(enableChat?"enableChat":"disableChat","true".getBytes());
 				} catch (Exception e1) {
-					e1.printStackTrace();
+					log.warn(e1.getMessage());
 				}
 				commandHandler.setEnableChat(enableChat);
 			}
@@ -230,13 +256,13 @@ public class RemoteDesktopSender extends JFrame{
 						display.setText(display.getText()+"\n"+chatTextField.getText());
 						chatTextField.setText("");
 					}catch(Exception ex){
-						ex.printStackTrace();
+						log.warn(ex.getMessage());
 					}
 				}else{
 					try {
 						commandHandler.sendCommand("isTyping",chatTextField.getText().length()>0?"true".getBytes():"false".getBytes());
 					} catch (Exception e1) {
-						e1.printStackTrace();
+						log.warn(e1.getMessage());
 					}
 				}
 			}

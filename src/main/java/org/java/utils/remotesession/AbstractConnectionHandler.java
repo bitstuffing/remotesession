@@ -2,15 +2,19 @@ package org.java.utils.remotesession;
 
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.io.OutputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.log4j.Logger;
+import org.java.utils.remotesession.utils.Constants;
 import org.java.utils.remotesession.utils.EncryptionUtils;
 import org.json.JSONObject;
 
 public abstract class AbstractConnectionHandler extends Thread {
+	
+	private Logger log = Logger.getLogger(Constants.LOG);
 	
 	private boolean wait = false;
 	protected Socket socket;
@@ -24,11 +28,11 @@ public abstract class AbstractConnectionHandler extends Thread {
 			Runtime runtime = Runtime.getRuntime();
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put(key, Base64.encodeBase64String(bytes));
-			System.out.println("sending...");
+			log.debug("sending...");
 			try {
 				writeJSONToOutputStream(jsonObject);
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.warn(e.getMessage());
 			} finally{
 				runtime.gc();
 				wait = false;
@@ -45,9 +49,9 @@ public abstract class AbstractConnectionHandler extends Thread {
 			oos.reset();
 			oos.writeObject(bytesEncrypted);
 			oos.flush();
-			System.out.println("Sending "+bytesEncrypted.length+" bytes to "+socket.getLocalPort()+" :: "+socket.getPort());
+			log.debug("Sending "+bytesEncrypted.length+" bytes to "+socket.getLocalPort()+" :: "+socket.getPort());
 		}catch(Exception e){
-			System.out.println("remote sender error");
+			log.warn("remote sender error");
 			throw e;
 		}finally {
 			oos = null;
@@ -64,18 +68,17 @@ public abstract class AbstractConnectionHandler extends Thread {
 			ObjectInputStream ois = null;
 			try{
 				ois = new ObjectInputStream(inputStream);
-				System.out.println("receiving command...");
+				log.debug("receiving command...");
 				Object object = ois.readObject();
 				if(object!=null && object instanceof byte[]){
 					String content = new String(EncryptionUtils.decrypt(key, null, (byte[])object),"UTF-8");
-					System.out.println("command length: "+content.length()+" bytes");
+					log.debug("command length: "+content.length()+" bytes");
 					json = new JSONObject(content);
 				}else{
-					System.out.println("rejected: "+object);
+					log.info("rejected: "+object);
 				}
 			}catch(Exception e){
-				System.out.println("Remote receiver fails!");
-				e.printStackTrace();
+				log.warn("Remote receiver fails! :"+e.getMessage());
 			}finally{
 				ois = null;
 				wait2 = false;

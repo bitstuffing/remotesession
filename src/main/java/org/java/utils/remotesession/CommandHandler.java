@@ -4,9 +4,13 @@ import java.awt.Robot;
 import java.io.IOException;
 import java.net.Socket;
 
+import org.apache.log4j.Logger;
+import org.java.utils.remotesession.utils.Constants;
 import org.json.JSONObject;
 
 public class CommandHandler extends AbstractConnectionHandler {
+	
+	private Logger log = Logger.getLogger(Constants.LOG);
 	
 	private Robot robot;
 	private boolean enableControl;
@@ -23,9 +27,9 @@ public class CommandHandler extends AbstractConnectionHandler {
 			this.inputStream = socket.getInputStream();
 			this.outputStream = socket.getOutputStream();
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.warn(e.getMessage());
 		}
-		System.out.println("Receiver :"+socket.getLocalPort()+" ::"+socket.getPort());
+		log.debug("CommandHandler :"+socket.getLocalPort()+" ::"+socket.getPort());
 		this.enableChat = false;
 		this.enableControl = false;
 	}
@@ -38,7 +42,7 @@ public class CommandHandler extends AbstractConnectionHandler {
 				json = receiveCommand();
 				try{
 					if(json!=null){
-						System.out.println(json.toString());
+						log.info(json.toString());
 						if(enableControl){
 							if(json.has("x") && json.has("y")){
 								robot.mouseMove(json.getInt("x"), json.getInt("y"));
@@ -63,16 +67,16 @@ public class CommandHandler extends AbstractConnectionHandler {
 								
 							}
 						}
-//						System.out.println(json.toString());
+						log.debug(json.toString());
 					}else{
-//						System.out.println("json is null - Receiver");
+						log.debug("json is null - Receiver");
 						Thread.sleep(200);
 					}
 				}catch(Exception e){
-					e.printStackTrace();
+					log.warn(e.getMessage());
 				}
 			}catch(Exception exc){
-				System.out.println("Exception trying to extract message!");
+				log.error("Exception trying to extract message!");
 			}finally{
 				runtime.gc();
 			}

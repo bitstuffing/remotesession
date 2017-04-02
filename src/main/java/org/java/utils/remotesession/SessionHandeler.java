@@ -21,11 +21,15 @@ import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.log4j.Logger;
 import org.java.utils.remotesession.panel.ImagePanel;
+import org.java.utils.remotesession.utils.Constants;
 import org.java.utils.remotesession.utils.ImageUtils;
 import org.json.JSONObject;
 
 public class SessionHandeler extends Thread {
+	
+	private Logger log = Logger.getLogger(Constants.LOG);
 
 	private JFrame frame;
 	private String cached = ""; //image cached
@@ -45,14 +49,14 @@ public class SessionHandeler extends Thread {
 		frame = new JFrame();
 		try {
 			Socket s = serverSocket.accept();
-//			System.out.println("imageHandler :"+s.getPort());
+//			log.info("imageHandler :"+s.getPort());
 			imageHandler = new LocalConnectionHandler(s,key);
 			Socket s2 = serverSocket.accept();
-//			System.out.println("messagesHandler :"+s2.getPort());
+//			log.info("messagesHandler :"+s2.getPort());
 			messagesHandler = new LocalConnectionHandler(s2,key);
 		} catch (IOException ex) {
-			ex.printStackTrace();
-			System.out.println("Launching a reset by exception...");
+			log.warn(ex.getMessage());
+			log.info("Launching a reset by exception...");
 			new SessionHandeler(serverSocket,key);
 		} 
 	}
@@ -94,7 +98,7 @@ public class SessionHandeler extends Thread {
 			jsonObject = imageHandler.receiveCommand();
 			runJSONCommand(jsonObject);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.warn(e.getMessage());
 		}finally{
 			jsonObject = null;
 		}
@@ -113,7 +117,7 @@ public class SessionHandeler extends Thread {
 				try {
 					messagesHandler.writeJSONToOutputStream(json);
 				} catch (Exception e1) {
-					e1.printStackTrace();
+					log.warn(e1.getMessage());
 				}
 			}
 			public void mouseReleased(MouseEvent ev) {
@@ -125,7 +129,7 @@ public class SessionHandeler extends Thread {
 				try {
 					messagesHandler.writeJSONToOutputStream(json);
 				} catch (Exception e) {
-					e.printStackTrace();
+					log.warn(e.getMessage());
 				}
 			}
 			
@@ -168,7 +172,7 @@ public class SessionHandeler extends Thread {
 				try {
 					messagesHandler.writeJSONToOutputStream(json);
 				} catch (Exception e) {
-					e.printStackTrace();
+					log.warn(e.getMessage());
 				}
 			}
 			public void mouseDragged(MouseEvent e) { }
@@ -183,7 +187,7 @@ public class SessionHandeler extends Thread {
 				try {
 					messagesHandler.writeJSONToOutputStream(json);
 				} catch (Exception e1) {
-					e1.printStackTrace();
+					log.warn(e1.getMessage());
 				}
 			}
 			public void keyPressed(KeyEvent ev) {
@@ -192,7 +196,7 @@ public class SessionHandeler extends Thread {
 				try {
 					messagesHandler.writeJSONToOutputStream(json);
 				} catch (Exception e) {
-					e.printStackTrace();
+					log.warn(e.getMessage());
 				}
 			}
 		});
@@ -213,7 +217,7 @@ public class SessionHandeler extends Thread {
 						imagePanel.setImage(image);
 						imagePanel.repaint();
 					}catch (Exception ex) {
-						ex.printStackTrace();
+						log.warn(ex.getMessage());
 						working = false;
 					}finally{
 						image = null;
@@ -233,7 +237,7 @@ public class SessionHandeler extends Thread {
 						jsonObject = messagesHandler.receiveCommand();
 						runJSONCommand(jsonObject);
 					}catch (Exception ex) {
-						ex.printStackTrace();
+						log.warn(ex.getMessage());
 						working = false;
 					}finally{
 						jsonObject = null;
@@ -248,27 +252,27 @@ public class SessionHandeler extends Thread {
 		if(jsonObject.has("image")){
 			cached = jsonObject.getString("image");
 		}else if(jsonObject.has("chatMessage")){
-			System.out.println("chatMessage");
+			log.info("chatMessage");
 			String content = display.getText()+"\n";
 			try {
 				String message = new String(Base64.decodeBase64(jsonObject.getString("chatMessage")),"UTF-8");
-				System.out.println("Message is: "+message);
+				log.info("Message is: "+message);
 				content+=message;
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.warn(e.getMessage());
 			} 
 			if(chatjframe!=null){
 				display.setText(content);
 			}
 		}else if(jsonObject.has("enableChat")){
-			System.out.println("enableChat");
+			log.info("enableChat");
 			if(chatjframe!=null){
 				chatjframe.setEnabled(true);
 				chatjframe.pack();
 				chatjframe.setVisible(true);
 			}
 		}else if(jsonObject.has("disableChat")){
-			System.out.println("disableChat");
+			log.info("disableChat");
 			if(chatjframe!=null){
 //				chatjframe.dispose();
 				chatjframe.setVisible(false);
@@ -283,10 +287,10 @@ public class SessionHandeler extends Thread {
 				}
 				display.setText(oldText+message);
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.warn(e.getMessage());
 			}
 		}else{
-//			System.out.println(jsonObject.toString());
+//			log.info(jsonObject.toString());
 		}
 	}
 
