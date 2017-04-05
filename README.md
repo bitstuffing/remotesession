@@ -14,9 +14,7 @@ At this moment it's using 2009 port, but you can change it in the code, it's eas
 
 When you open the app you will have to choose:
 
-<img src="https://s21.postimg.org/lb1bkozoj/Welcome1.png" width="350" alt="Welcome1" />
-
-<img src="https://s21.postimg.org/n44890kv7/Welcome2.png" width="350" alt="Welcome2" />
+<img src="http://i.imgur.com/lIB3oZH.png" width="350" alt="Welcome" />
 
 All sessions are encrypted, so needs to put a password and this password. If you don't put a password sessions
 will be encrypted with default (and vulnerable) key.
