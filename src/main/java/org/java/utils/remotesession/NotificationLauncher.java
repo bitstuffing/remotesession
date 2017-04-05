@@ -18,6 +18,7 @@ import javax.swing.WindowConstants;
 
 import org.apache.log4j.Logger;
 import org.java.utils.remotesession.utils.Constants;
+import org.java.utils.remotesession.utils.TextsUtils;
 
 public class NotificationLauncher{
 	
@@ -46,7 +47,7 @@ public class NotificationLauncher{
 	}
 	
 	public static void showNotification(String title,String body,long time) {
-		log.debug("Showing notification: "+title+", "+body);
+		log.debug(TextsUtils.getText("message.showingnotification")+": "+title+", "+body);
 		final JFrame frame = new JFrame();
 		frame.setSize(width,height);
 		frame.setIconImage(headingIcon.getImage());

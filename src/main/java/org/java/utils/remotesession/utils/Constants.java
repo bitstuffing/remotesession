@@ -15,5 +15,7 @@ public class Constants {
 	public static final String CHECKIP_TRACKIP_PROVIDER = "http://www.trackip.net/ip";
 	public static final String CHECKIP_MYEXTERNALIP_PROVIDER = "http://myexternalip.com/raw";
 	public static final String CHECKIP_IPECHO_PROVIDER = "http://ipecho.net/plain";
+	public static final String PASSWD = "orangeisnotblack";
+	public static final String PASSWD_CHAR = "p";
 
 }

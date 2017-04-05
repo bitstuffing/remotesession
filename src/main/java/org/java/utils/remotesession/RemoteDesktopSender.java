@@ -12,13 +12,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -31,10 +31,13 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.java.utils.remotesession.utils.ConnectionUtils;
 import org.java.utils.remotesession.utils.Constants;
 import org.java.utils.remotesession.utils.EncryptionUtils;
+import org.java.utils.remotesession.utils.TextsUtils;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class RemoteDesktopSender extends JFrame{
@@ -45,10 +48,13 @@ public class RemoteDesktopSender extends JFrame{
 	private static Robot robot;
 	private JSlider jslider;
 	private JTextField chatTextField;
+	private JTextArea display;
+	
 	private ImageSender imageSender;
 	private CommandHandler commandHandler;
 	private String remoteAddress;
-	private String key = "orangeisnotblack";
+	private String key = Constants.PASSWD;
+	
 	private static float quality;
 	private static boolean enableControl;
 	private static boolean enableChat;
@@ -68,21 +74,10 @@ public class RemoteDesktopSender extends JFrame{
 		this.key = key;
 	}
 
-	public RemoteDesktopSender() {
+	public RemoteDesktopSender(String id) {
 		String response = null;
 		try {
 			robot = new Robot();
-//			String password = JOptionPane.showInputDialog("Write session password:");
-//			password = (password==null || password.isEmpty())?this.key:password;
-//			for(;(password.length())%16!=0;){
-//				password+="p";
-//			}
-//			key = password;
-//			final String response2 = JOptionPane.showInputDialog("Write remote address (needs to be waiting for):");
-			String id = null;
-			do{
-				id = JOptionPane.showInputDialog("Write session id:");
-			}while(id==null || id.isEmpty());
 			JSONObject jsonResponse = null;
 			try {
 				String sResponse = ConnectionUtils.get(Constants.HASTEBIN_RAW_PROVIDER+id);
@@ -106,7 +101,7 @@ public class RemoteDesktopSender extends JFrame{
 					imageSender = new ImageSender(socket,robot,password);
 					imageSender.start();
 					Socket socket2 = new Socket(response2, Constants.REMOTE_PORT);
-					commandHandler = new CommandHandler(socket2,robot,password);
+					commandHandler = new CommandHandler(socket2,robot,password,display);
 					commandHandler.start();
 					setDefaultCloseOperation(EXIT_ON_CLOSE);
 					setVisible(true);
@@ -138,7 +133,7 @@ public class RemoteDesktopSender extends JFrame{
 		JPanel panel = new JPanel();
 		panel.setLayout(gridBagLayout);
 		this.setSize(320, 400);
-		Label qualityLabel = new Label("Quality");
+		Label qualityLabel = new Label(TextsUtils.getText("label.quality"));
 		qualityLabel.setAlignment(FlowLayout.LEFT);
 		cc.gridx = 0;
 		cc.gridy = 0;
@@ -153,7 +148,7 @@ public class RemoteDesktopSender extends JFrame{
 //		cc = new GridBagConstraints();
 		cc.gridx = 1;
 		panel.add(this.jslider,cc);
-		Label connectedSession = new Label("Connected to: ");
+		Label connectedSession = new Label(TextsUtils.getText("label.connectedto")+": ");
 		connectedSession.setAlignment(FlowLayout.LEFT);
 		cc.gridx = 0;
 		cc.gridy = 1;
@@ -164,7 +159,7 @@ public class RemoteDesktopSender extends JFrame{
 		textField.setHorizontalAlignment(FlowLayout.LEFT);
 		cc.gridx = 1;
 		panel.add(textField,cc);
-		Label framesLabel = new Label("Frames per second:");
+		Label framesLabel = new Label(TextsUtils.getText("label.fps"));
 		framesLabel.setAlignment(FlowLayout.LEFT);
 		cc.gridx = 0;
 		cc.gridy = 2;
@@ -191,7 +186,7 @@ public class RemoteDesktopSender extends JFrame{
 	    jFormattedTextField.setHorizontalAlignment(FlowLayout.LEFT);
 	    cc.gridx = 1;
 	    panel.add(jFormattedTextField,cc);
-	    Label controlCheckboxLabel = new Label("Enable control");
+	    Label controlCheckboxLabel = new Label(TextsUtils.getText("label.enablecontrol"));
 	    controlCheckboxLabel.setAlignment(FlowLayout.LEFT);
 	    cc.gridx = 0;
 	    cc.gridy = 3;
@@ -203,7 +198,7 @@ public class RemoteDesktopSender extends JFrame{
 				commandHandler.setEnableControl(enableControl);
 			}
 		});
-	    controlCheckbox.setToolTipText("Capture input events from mouse and keyboard");
+	    controlCheckbox.setToolTipText(TextsUtils.getText("label.captureinputeventsfrom"));
 	    controlCheckbox.setHorizontalAlignment(FlowLayout.LEFT);
 	    cc.gridx = 1;
 	    panel.add(controlCheckbox,cc);
@@ -215,7 +210,7 @@ public class RemoteDesktopSender extends JFrame{
 	    JCheckBox chatCheckbox = new JCheckBox();
 	    chatCheckbox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				log.info("click!");
+				log.info(TextsUtils.getText("message.click"));
 				enableChat = !enableChat;
 				chatTextField.setEditable(enableChat);
 				chatTextField.setText("");
@@ -228,7 +223,7 @@ public class RemoteDesktopSender extends JFrame{
 				commandHandler.setEnableChat(enableChat);
 			}
 		});
-	    controlCheckbox.setToolTipText("Enable remote chat with receiver");
+	    controlCheckbox.setToolTipText(TextsUtils.getText("message.enableremotechat"));
 	    controlCheckbox.setHorizontalAlignment(FlowLayout.LEFT);
 	    cc.gridx = 1;
 	    cc.gridy = 4;
@@ -242,7 +237,7 @@ public class RemoteDesktopSender extends JFrame{
 	private JPanel getChannelPanel() {
 		JPanel chatPanel = new JPanel();
 	    chatPanel.setLayout(new BoxLayout(chatPanel,BoxLayout.Y_AXIS));
-	    final JTextArea display = new JTextArea(16,16);
+	    display = new JTextArea(16,16);
 	    display.setEditable(false); 
 	    JScrollPane scroll = new JScrollPane(display);
 	    scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -250,10 +245,15 @@ public class RemoteDesktopSender extends JFrame{
 	    chatTextField = new JTextField();
 	    chatTextField.addKeyListener(new KeyListener() {
 			public void keyTyped(KeyEvent e) {
-				if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+				if(e.getKeyChar() == '\n') {
 					try{
 						commandHandler.sendCommand("chatMessage",chatTextField.getText().getBytes());
-						display.setText(display.getText()+"\n"+chatTextField.getText());
+						String displayedText = display.getText();
+						if(displayedText.lastIndexOf("\n"+TextsUtils.getText("message.istyping"))==
+								displayedText.length()-(("\n"+TextsUtils.getText("message.istyping")).length()+1)){
+							displayedText = displayedText.substring(0,displayedText.lastIndexOf("\n"+TextsUtils.getText("message.istyping")));
+						}
+						display.setText(displayedText+"\n"+chatTextField.getText());
 						chatTextField.setText("");
 					}catch(Exception ex){
 						log.warn(ex.getMessage());
@@ -273,10 +273,6 @@ public class RemoteDesktopSender extends JFrame{
 	    scroll2.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 	    chatPanel.add(scroll2);
 	    return chatPanel;
-	}
-
-	public static void main(String[] args) {
-		new RemoteDesktopSender();
 	}
 
 }

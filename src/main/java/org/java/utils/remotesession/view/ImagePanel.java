@@ -1,4 +1,4 @@
-package org.java.utils.remotesession.panel;
+package org.java.utils.remotesession.view;
 
 import java.awt.Graphics;
 import java.awt.Image;

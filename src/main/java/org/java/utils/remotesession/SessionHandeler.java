@@ -22,9 +22,10 @@ import javax.swing.ScrollPaneConstants;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
-import org.java.utils.remotesession.panel.ImagePanel;
 import org.java.utils.remotesession.utils.Constants;
 import org.java.utils.remotesession.utils.ImageUtils;
+import org.java.utils.remotesession.utils.TextsUtils;
+import org.java.utils.remotesession.view.ImagePanel;
 import org.json.JSONObject;
 
 public class SessionHandeler extends Thread {
@@ -56,7 +57,7 @@ public class SessionHandeler extends Thread {
 			messagesHandler = new LocalConnectionHandler(s2,key);
 		} catch (IOException ex) {
 			log.warn(ex.getMessage());
-			log.info("Launching a reset by exception...");
+			log.info(TextsUtils.getText("error.launchingreset"));
 			new SessionHandeler(serverSocket,key);
 		} 
 	}
@@ -76,7 +77,12 @@ public class SessionHandeler extends Thread {
 					String text = chatTextField.getText();
 					messagesHandler.sendCommand("chatMessage", text.getBytes());
 					chatTextField.setText("");
-					display.setText(display.getText()+"\n"+text);
+					String displayedText = display.getText();
+					if(displayedText.lastIndexOf("\n"+TextsUtils.getText("message.istyping"))==
+							displayedText.length()-(("\n"+TextsUtils.getText("message.istyping")).length()+1)){
+						displayedText = displayedText.substring(0,displayedText.lastIndexOf("\n"+TextsUtils.getText("message.istyping")));
+					}
+					display.setText(displayedText+"\n"+text);
 				}
 			}
 			public void keyReleased(KeyEvent e) {}
@@ -257,7 +263,11 @@ public class SessionHandeler extends Thread {
 			try {
 				String message = new String(Base64.decodeBase64(jsonObject.getString("chatMessage")),"UTF-8");
 				log.info("Message is: "+message);
-				content+=message;
+				if(content.lastIndexOf("\n"+TextsUtils.getText("message.istyping"))==
+						content.length()-(("\n"+TextsUtils.getText("message.istyping")).length()+1)){
+					content = content.substring(0,content.lastIndexOf("\n"+TextsUtils.getText("message.istyping")));
+				}
+				content+="\n"+message;
 			} catch (Exception e) {
 				log.warn(e.getMessage());
 			} 
@@ -280,10 +290,10 @@ public class SessionHandeler extends Thread {
 		}else if(jsonObject.has("isTyping")){
 			try {
 				String message = new String(Base64.decodeBase64(jsonObject.getString("isTyping")),"UTF-8");
-				message = message.equals("true")?"\nIs typing...":"";
+				message = message.equals(Boolean.TRUE.toString())?"\n"+TextsUtils.getText("message.istyping"):"";
 				String oldText = display.getText();
-				if(oldText.endsWith("\nIs typing...")){
-					oldText = oldText.substring(0,oldText.lastIndexOf("\nIs typing..."));
+				if(oldText.endsWith("\n"+TextsUtils.getText("message.istyping"))){
+					oldText = oldText.substring(0,oldText.lastIndexOf("\n"+TextsUtils.getText("message.istyping")));
 				}
 				display.setText(oldText+message);
 			} catch (Exception e) {

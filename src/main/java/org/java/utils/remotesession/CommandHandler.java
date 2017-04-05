@@ -4,8 +4,13 @@ import java.awt.Robot;
 import java.io.IOException;
 import java.net.Socket;
 
+import javax.swing.JTextArea;
+
+import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.java.utils.remotesession.utils.Constants;
+import org.java.utils.remotesession.utils.EncryptionUtils;
+import org.java.utils.remotesession.utils.TextsUtils;
 import org.json.JSONObject;
 
 public class CommandHandler extends AbstractConnectionHandler {
@@ -16,13 +21,16 @@ public class CommandHandler extends AbstractConnectionHandler {
 	private boolean enableControl;
 	private boolean enableChat;
 
+	private JTextArea display;
+
 	/**
 	 * Receive robot commands
 	 */
-	public CommandHandler(Socket socket,Robot robot,String key) {
+	public CommandHandler(Socket socket,Robot robot,String key, JTextArea display) {
 		this.socket = socket;
 		this.robot = robot;
 		this.key = key;
+		this.display = display;
 		try {
 			this.inputStream = socket.getInputStream();
 			this.outputStream = socket.getOutputStream();
@@ -61,22 +69,25 @@ public class CommandHandler extends AbstractConnectionHandler {
 						}
 						if(enableChat){
 							if(json.has("isTyping")){
-								
+								log.error(json.get("isTyping"));
 							}
-							if(json.has("textContent")){
-								
+							if(json.has("chatMessage")){
+								log.error(json.get("chatMessage"));
+								String content = new String(Base64.decodeBase64(json.getString("chatMessage")),"UTF-8");
+								log.error(content);
+								display.setText(display.getText()+"\n"+content);
 							}
 						}
 						log.debug(json.toString());
 					}else{
-						log.debug("json is null - Receiver");
+						log.debug(TextsUtils.getText("error.jsonisnullreceiver"));
 						Thread.sleep(200);
 					}
 				}catch(Exception e){
 					log.warn(e.getMessage());
 				}
 			}catch(Exception exc){
-				log.error("Exception trying to extract message!");
+				log.error(TextsUtils.getText("error.exceptiontryingtoextractmessage"));
 			}finally{
 				runtime.gc();
 			}

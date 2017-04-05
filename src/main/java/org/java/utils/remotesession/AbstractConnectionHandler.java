@@ -10,6 +10,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.java.utils.remotesession.utils.Constants;
 import org.java.utils.remotesession.utils.EncryptionUtils;
+import org.java.utils.remotesession.utils.TextsUtils;
 import org.json.JSONObject;
 
 public abstract class AbstractConnectionHandler extends Thread {
@@ -28,7 +29,7 @@ public abstract class AbstractConnectionHandler extends Thread {
 			Runtime runtime = Runtime.getRuntime();
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put(key, Base64.encodeBase64String(bytes));
-			log.debug("sending...");
+			log.debug(TextsUtils.getText("message.sending"));
 			try {
 				writeJSONToOutputStream(jsonObject);
 			} catch (Exception e) {
@@ -49,9 +50,9 @@ public abstract class AbstractConnectionHandler extends Thread {
 			oos.reset();
 			oos.writeObject(bytesEncrypted);
 			oos.flush();
-			log.debug("Sending "+bytesEncrypted.length+" bytes to "+socket.getLocalPort()+" :: "+socket.getPort());
+			log.debug(TextsUtils.getText("message.sendingstart")+" "+bytesEncrypted.length+" bytes to "+socket.getLocalPort()+" :: "+socket.getPort());
 		}catch(Exception e){
-			log.warn("remote sender error");
+			log.warn(TextsUtils.getText("error.remoteservererror"));
 			throw e;
 		}finally {
 			oos = null;
@@ -68,17 +69,17 @@ public abstract class AbstractConnectionHandler extends Thread {
 			ObjectInputStream ois = null;
 			try{
 				ois = new ObjectInputStream(inputStream);
-				log.debug("receiving command...");
+				log.debug(TextsUtils.getText("message.receivingcommand"));
 				Object object = ois.readObject();
 				if(object!=null && object instanceof byte[]){
 					String content = new String(EncryptionUtils.decrypt(key, null, (byte[])object),"UTF-8");
-					log.debug("command length: "+content.length()+" bytes");
+					log.debug(TextsUtils.getText("message.commandlength")+" "+content.length()+" bytes");
 					json = new JSONObject(content);
 				}else{
-					log.info("rejected: "+object);
+					log.info(TextsUtils.getText("message.rejected")+": "+object);
 				}
 			}catch(Exception e){
-				log.warn("Remote receiver fails! :"+e.getMessage());
+				log.warn(TextsUtils.getText("error.remoteserverfails")+": "+e.getMessage());
 			}finally{
 				ois = null;
 				wait2 = false;
